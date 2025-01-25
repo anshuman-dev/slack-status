@@ -1,4 +1,4 @@
 # slack-status
 
 
-This is the README.md file
+This is the README.md file. With the new updates
