@@ -12,14 +12,26 @@ class QuoteFetcher:
     def __init__(self):
         self.apis = [
             {
-                'url': 'https://api.quotable.io/random',
+                'url': 'https://api.quotable.io/random?tags=technology,wisdom,business,success,leadership',
                 'process': lambda r: (r['content'], r['author'])
             },
             {
-                'url': 'https://api.adviceslip.com/advice',
-                'process': lambda r: (r['slip']['advice'], 'Advice Slip')
+                'url': 'https://zenquotes.io/api/random',
+                'process': lambda r: (r[0]['q'], r[0]['a'])
             }
         ]
+
+    def _is_appropriate(self, text: str) -> bool:
+        """Check if the quote is appropriate for professional settings."""
+        # List of topics/words to avoid
+        inappropriate_topics = [
+            'black', 'white', 'race', 'gender', 'political', 'religion',
+            'racist', 'sexist', 'offensive', 'controversial', 'hate',
+            'drug', 'alcohol', 'nsfw', 'dating', 'gambling'
+        ]
+        
+        text_lower = text.lower()
+        return not any(topic in text_lower for topic in inappropriate_topics)
 
     def get_random_quote(self) -> Tuple[str, str]:
         """Fetch a random quote from one of the APIs."""
@@ -29,14 +41,21 @@ class QuoteFetcher:
             response.raise_for_status()
             content = response.json()
             quote, author = api['process'](content)
+            # Check if the quote is appropriate
+            if not self._is_appropriate(quote):
+                raise ValueError("Quote contained inappropriate content")
             return f"{quote} - {author}", self._categorize_quote(quote)
         except Exception as e:
             print(f"API Error: {e}")
             fallback_quotes = [
-                ("The only way to do great work is to love what you do. - Steve Jobs", "inspiration"),
-                ("Stay hungry, stay foolish. - Steve Jobs", "motivation"),
-                ("The future depends on what you do today. - Gandhi", "future"),
-                ("Life is what happens while you're busy making other plans. - John Lennon", "life")
+                ("Innovation distinguishes between a leader and a follower. - Steve Jobs", "inspiration"),
+                ("The best way to predict the future is to create it. - Peter Drucker", "future"),
+                ("Continuous learning is the minimum requirement for success in any field. - Brian Tracy", "growth"),
+                ("Quality is not an act, it is a habit. - Aristotle", "wisdom"),
+                ("The only limit to our realization of tomorrow will be our doubts of today. - Franklin D. Roosevelt", "motivation"),
+                ("Success is not final, failure is not fatal: it is the courage to continue that counts. - Winston Churchill", "motivation"),
+                ("The way to get started is to quit talking and begin doing. - Walt Disney", "action"),
+                ("Leadership is the capacity to translate vision into reality. - Warren Bennis", "leadership")
             ]
             return random.choice(fallback_quotes)
 
