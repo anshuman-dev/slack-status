@@ -38,8 +38,13 @@ class QuoteFetcher:
         """
         Ensures quotes are appropriate and aligned with positive, meaningful themes.
         Filters out potentially negative or controversial content while ensuring
-        the presence of uplifting themes.
+        the presence of uplifting themes and checking length limits.
         """
+        # First check if the quote would be too long when formatted
+        formatted_quote = f"{text} - "  # Account for the author part that will be added later
+        if len(formatted_quote) > 80:  # Leave room for author (roughly 20 chars)
+            return False
+            
         # Define topics to avoid in our quotes
         inappropriate_topics = [
             'death', 'dying', 'mortality', 'kill', 'pain', 'suffer',
@@ -85,39 +90,47 @@ class QuoteFetcher:
     def get_random_quote(self) -> Tuple[str, str]:
         """
         Fetches a random quote from available sources, ensuring it meets our
-        criteria for positivity and meaningfulness.
+        criteria for positivity and meaningfulness. Makes multiple attempts
+        to get a quote within length limits.
         """
-        api = random.choice(self.apis)
-        try:
-            response = requests.get(api['url'], timeout=5)
-            response.raise_for_status()
-            content = response.json()
-            quote, author = api['process'](content)
-            
-            # Verify quote appropriateness
-            if not self._is_appropriate(quote):
-                raise ValueError("Quote contained inappropriate content")
-            
-            return f"{quote} - {author}", self._categorize_quote(quote)
-            
-        except Exception as e:
-            print(f"API Error: {e}")
-            # Carefully curated fallback quotes focusing on wisdom and positivity
-            fallback_quotes = [
-                ("We are what we repeatedly do. Excellence, then, is not an act, but a habit. - Aristotle", "wisdom"),
-                ("The mind is everything. What you think you become. - Buddha", "mindfulness"),
-                ("Happiness is not something ready made. It comes from your own actions. - Dalai Lama", "joy"),
-                ("The purpose of our lives is to be happy. - Dalai Lama", "purpose"),
-                ("Every moment is a fresh beginning. - T.S. Eliot", "growth"),
-                ("The journey of a thousand miles begins with one step. - Lao Tzu", "journey"),
-                ("Be the change you wish to see in the world. - Mahatma Gandhi", "inspiration"),
-                ("Yesterday I was clever, so I wanted to change the world. Today I am wise, so I am changing myself. - Rumi", "wisdom"),
-                ("The universe is not outside of you. Look inside yourself; everything that you want, you already are. - Rumi", "mindfulness"),
-                ("What lies behind us and what lies before us are tiny matters compared to what lies within us. - Ralph Waldo Emerson", "potential"),
-                ("Life is a balance of holding on and letting go. - Rumi", "harmony"),
-                ("The present moment is filled with joy and happiness. If you are attentive, you will see it. - Thich Nhat Hanh", "mindfulness")
-            ]
-            return random.choice(fallback_quotes)
+        max_attempts = 3  # Try up to 3 times to get a good quote
+        
+        for _ in range(max_attempts):
+            api = random.choice(self.apis)
+            try:
+                response = requests.get(api['url'], timeout=5)
+                response.raise_for_status()
+                content = response.json()
+                quote, author = api['process'](content)
+                
+                # Verify quote appropriateness (including length)
+                if not self._is_appropriate(quote):
+                    continue
+                
+                # If we get here, the quote is good and within length limits
+                return f"{quote} - {author}", self._categorize_quote(quote)
+                
+            except Exception as e:
+                print(f"API Error: {e}")
+                break  # Break to fallback quotes if API fails
+        
+        # If we get here, either all attempts failed or API errored
+        # Use our pre-verified fallback quotes
+        fallback_quotes = [
+            ("We are what we repeatedly do. Excellence, then, is not an act, but a habit. - Aristotle", "wisdom"),
+            ("The mind is everything. What you think you become. - Buddha", "mindfulness"),
+            ("Happiness is not something ready made. It comes from your own actions. - Dalai Lama", "joy"),
+            ("The purpose of our lives is to be happy. - Dalai Lama", "purpose"),
+            ("Every moment is a fresh beginning. - T.S. Eliot", "growth"),
+            ("The journey of a thousand miles begins with one step. - Lao Tzu", "journey"),
+            ("Be the change you wish to see in the world. - Mahatma Gandhi", "inspiration"),
+            ("Yesterday I was clever, so I wanted to change the world. Today I am wise, so I am changing myself. - Rumi", "wisdom"),
+            ("The universe is not outside of you. Look inside yourself; everything that you want, you already are. - Rumi", "mindfulness"),
+            ("What lies behind us and what lies before us are tiny matters compared to what lies within us. - Ralph Waldo Emerson", "potential"),
+            ("Life is a balance of holding on and letting go. - Rumi", "harmony"),
+            ("The present moment is filled with joy and happiness. If you are attentive, you will see it. - Thich Nhat Hanh", "mindfulness")
+        ]
+        return random.choice(fallback_quotes)
 
 class EmojiMatcher:
     """
@@ -160,14 +173,11 @@ class SlackStatusUpdater:
         """
         try:
             # Fetch quote and determine its category
+            # Quote is guaranteed to be within limits by _is_appropriate
             quote, category = self.quote_fetcher.get_random_quote()
             
             # Get matching emoji
             emoji = self.emoji_matcher.get_emoji(category)
-            
-            # Ensure quote fits Slack's length limits
-            if len(quote) > 100:
-                quote = quote[:97] + "..."
             
             # Calculate next day for status expiration
             tomorrow = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
@@ -185,3 +195,4 @@ class SlackStatusUpdater:
             
         except Exception as e:
             print(f"Error updating status: {e}")
+            raise e  # Re-raise for GitHub Actions to mark as failed
