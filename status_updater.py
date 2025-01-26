@@ -8,44 +8,43 @@ from typing import Tuple
 class QuoteFetcher:
     """
     Handles fetching and processing meaningful quotes from various sources.
-    Focuses on wisdom, mindfulness, and positive philosophical content.
+    Combines tech wisdom, leadership insights, and pop culture references.
     """
     
     def __init__(self):
-        # Configure API endpoints with specific focus on meaningful content
+        # Configure API endpoints focusing on tech and leadership content
         self.apis = [
             {
-                # Quotable.io with carefully selected tags for wisdom and mindfulness
-                'url': 'https://api.quotable.io/random?tags=wisdom,philosophy,inspiration,mindfulness,happiness,growth',
+                # Quotable.io with tech and leadership focused tags
+                'url': 'https://api.quotable.io/random?tags=technology,science,success,leadership,innovation,business,inspiration',
                 'process': lambda r: (r['content'], r['author'])
             },
             {
-                # Zen Quotes API for mindful, philosophical content
+                # Zen Quotes API for additional wisdom
                 'url': 'https://zenquotes.io/api/random',
                 'process': lambda r: (r[0]['q'], r[0]['a'])
             }
         ]
         
-        # Define positive themes we want to emphasize in our quotes
+        # Define themes we want to emphasize in our quotes
         self.positive_themes = [
-            'growth', 'wisdom', 'potential', 'mindfulness', 'peace',
-            'joy', 'gratitude', 'kindness', 'harmony', 'purpose',
-            'learning', 'discovery', 'wonder', 'creativity', 'balance',
-            'hope', 'strength', 'courage', 'patience', 'love'
+            'innovation', 'leadership', 'technology', 'success', 'growth',
+            'courage', 'wisdom', 'power', 'victory', 'excellence',
+            'creativity', 'determination', 'strength', 'progress', 'vision',
+            'achievement', 'inspiration', 'discovery', 'breakthrough', 'triumph'
         ]
 
     def _is_appropriate(self, text: str) -> bool:
         """
-        Ensures quotes are appropriate and aligned with positive, meaningful themes.
-        Filters out potentially negative or controversial content while ensuring
-        the presence of uplifting themes and checking length limits.
+        Ensures quotes are appropriate, positive, and within length limits.
+        Filters out negative content while ensuring uplifting themes.
         """
         # First check if the quote would be too long when formatted
-        formatted_quote = f"{text} - "  # Account for the author part that will be added later
+        formatted_quote = f"{text} - "  # Account for the author part
         if len(formatted_quote) > 80:  # Leave room for author (roughly 20 chars)
             return False
             
-        # Define topics to avoid in our quotes
+        # Define topics to avoid
         inappropriate_topics = [
             'death', 'dying', 'mortality', 'kill', 'pain', 'suffer',
             'black', 'white', 'race', 'gender', 'political', 'religion',
@@ -69,16 +68,16 @@ class QuoteFetcher:
     def _categorize_quote(self, quote: str) -> str:
         """
         Analyzes quote content to determine its primary theme for emoji matching.
-        Categories are designed to match with appropriate, meaningful emojis.
+        Categories cover both tech and entertainment themes.
         """
         categories = {
-            'inspiration': ['inspire', 'dream', 'achieve', 'possible', 'potential'],
-            'wisdom': ['learn', 'know', 'wisdom', 'understand', 'truth', 'mind'],
-            'mindfulness': ['present', 'moment', 'mindful', 'aware', 'conscious'],
-            'growth': ['grow', 'change', 'improve', 'better', 'progress', 'journey'],
-            'harmony': ['peace', 'balance', 'harmony', 'calm', 'tranquil'],
-            'joy': ['happy', 'joy', 'delight', 'smile', 'laugh', 'gratitude'],
-            'purpose': ['purpose', 'meaning', 'goal', 'direction', 'path']
+            'tech': ['code', 'program', 'developer', 'engineer', 'system', 'data'],
+            'innovation': ['innovate', 'create', 'invent', 'build', 'design', 'future'],
+            'leadership': ['lead', 'guide', 'inspire', 'achieve', 'vision', 'success'],
+            'wisdom': ['learn', 'know', 'understand', 'truth', 'mind', 'think'],
+            'power': ['strength', 'force', 'power', 'strong', 'mighty', 'valor'],
+            'victory': ['win', 'conquer', 'achieve', 'triumph', 'succeed', 'accomplish'],
+            'journey': ['path', 'way', 'road', 'journey', 'quest', 'adventure']
         }
         
         quote_lower = quote.lower()
@@ -89,9 +88,8 @@ class QuoteFetcher:
 
     def get_random_quote(self) -> Tuple[str, str]:
         """
-        Fetches a random quote from available sources, ensuring it meets our
-        criteria for positivity and meaningfulness. Makes multiple attempts
-        to get a quote within length limits.
+        Fetches a random quote, making multiple attempts to get one within length limits.
+        Falls back to curated quotes from tech and entertainment if API fails.
         """
         max_attempts = 3  # Try up to 3 times to get a good quote
         
@@ -107,28 +105,54 @@ class QuoteFetcher:
                 if not self._is_appropriate(quote):
                     continue
                 
-                # If we get here, the quote is good and within length limits
                 return f"{quote} - {author}", self._categorize_quote(quote)
                 
             except Exception as e:
                 print(f"API Error: {e}")
-                break  # Break to fallback quotes if API fails
-        
-        # If we get here, either all attempts failed or API errored
-        # Use our pre-verified fallback quotes
+                break
+
+        # Carefully curated fallback quotes combining tech, leadership, and pop culture
         fallback_quotes = [
-            ("We are what we repeatedly do. Excellence, then, is not an act, but a habit. - Aristotle", "wisdom"),
-            ("The mind is everything. What you think you become. - Buddha", "mindfulness"),
-            ("Happiness is not something ready made. It comes from your own actions. - Dalai Lama", "joy"),
-            ("The purpose of our lives is to be happy. - Dalai Lama", "purpose"),
-            ("Every moment is a fresh beginning. - T.S. Eliot", "growth"),
-            ("The journey of a thousand miles begins with one step. - Lao Tzu", "journey"),
-            ("Be the change you wish to see in the world. - Mahatma Gandhi", "inspiration"),
-            ("Yesterday I was clever, so I wanted to change the world. Today I am wise, so I am changing myself. - Rumi", "wisdom"),
-            ("The universe is not outside of you. Look inside yourself; everything that you want, you already are. - Rumi", "mindfulness"),
-            ("What lies behind us and what lies before us are tiny matters compared to what lies within us. - Ralph Waldo Emerson", "potential"),
-            ("Life is a balance of holding on and letting go. - Rumi", "harmony"),
-            ("The present moment is filled with joy and happiness. If you are attentive, you will see it. - Thich Nhat Hanh", "mindfulness")
+            # Tech Leadership
+            ("Innovation distinguishes between a leader and a follower. - Steve Jobs", "innovation"),
+            ("Move fast and learn things. - Meta Engineering", "tech"),
+            ("Done is better than perfect. - Sheryl Sandberg", "leadership"),
+            ("Make it work, make it right, make it fast. - Kent Beck", "tech"),
+            ("First solve the problem, then write the code. - John Johnson", "tech"),
+            ("Stay hungry, stay foolish. - Steve Jobs", "innovation"),
+            ("Talk is cheap. Show me the code. - Linus Torvalds", "tech"),
+            
+            # Game of Thrones
+            ("Chaos isn't a pit. Chaos is a ladder. - Littlefinger", "wisdom"),
+            ("The man who passes the sentence should swing the sword. - Ned Stark", "leadership"),
+            ("I am not a politician, I am a queen. - Daenerys Targaryen", "power"),
+            ("The night is dark and full of terrors, but the fire burns them all away. - Melisandre", "victory"),
+            
+            # Star Wars
+            ("Do. Or do not. There is no try. - Yoda", "wisdom"),
+            ("Never tell me the odds. - Han Solo", "courage"),
+            ("The Force will be with you. Always. - Obi-Wan Kenobi", "power"),
+            ("In my experience, there's no such thing as luck. - Obi-Wan Kenobi", "wisdom"),
+            
+            # Lord of the Rings
+            ("All we have to decide is what to do with the time given us. - Gandalf", "wisdom"),
+            ("Even the smallest person can change the course of the future. - Galadriel", "innovation"),
+            ("There's some good in this world, and it's worth fighting for. - Sam", "victory"),
+            
+            # Marvel
+            ("I am Iron Man. - Tony Stark", "power"),
+            ("With great power comes great responsibility. - Uncle Ben", "leadership"),
+            ("I can do this all day. - Steve Rogers", "determination"),
+            
+            # Tech Shows/Movies
+            ("I am not a robot. I just speak in code. - Silicon Valley", "tech"),
+            ("Sometimes it's better to be a warrior in a garden than a gardener in a war. - Mr. Robot", "wisdom"),
+            ("It's not a bug – it's an undocumented feature. - Programming Wisdom", "tech"),
+            
+            # Modern Tech Leaders
+            ("The best way to predict the future is to invent it. - Alan Kay", "innovation"),
+            ("Code is poetry. - WordPress", "tech"),
+            ("Think different. - Apple", "innovation")
         ]
         return random.choice(fallback_quotes)
 
@@ -140,14 +164,14 @@ class EmojiMatcher:
     
     def __init__(self):
         self.emoji_map = {
-            'inspiration': ['✨', '💫', '🌟', '⭐', '🚀'],
-            'wisdom': ['🧠', '📚', '💡', '🎓', '🌿'],
-            'mindfulness': ['🧘', '🌸', '☮️', '🕊️', '🌅'],
-            'growth': ['🌱', '🪴', '🌿', '🎋', '🌳'],
-            'harmony': ['☯️', '🌈', '🕊️', '🌺', '🌸'],
-            'joy': ['☀️', '🌟', '💖', '🌸', '✨'],
-            'purpose': ['🎯', '⭐', '🌟', '🧭', '🌅'],
-            'general': ['💭', '✨', '💫', '🌟', '💝']
+            'tech': ['💻', '⚡', '🤖', '🚀', '💡'],
+            'innovation': ['✨', '💫', '🌟', '⭐', '🔮'],
+            'leadership': ['👑', '🎯', '🦁', '⚔️', '🛡️'],
+            'wisdom': ['🧠', '📚', '🎓', '🌿', '🔮'],
+            'power': ['⚡', '💪', '🔥', '⚔️', '✨'],
+            'victory': ['🏆', '👑', '⭐', '🌟', '🔥'],
+            'journey': ['🧭', '🗺️', '⭐', '🌠', '🚀'],
+            'general': ['💫', '✨', '⭐', '🌟', '💝']
         }
 
     def get_emoji(self, category: str) -> str:
